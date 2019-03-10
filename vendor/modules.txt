@@ -1,0 +1,16 @@
+# github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802
+github.com/BurntSushi/xgb
+github.com/BurntSushi/xgb/xinerama
+github.com/BurntSushi/xgb/xproto
+# github.com/BurntSushi/xgbutil v0.0.0-20160919175755-f7c97cef3b4e
+github.com/BurntSushi/xgbutil
+github.com/BurntSushi/xgbutil/xprop
+# github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc
+github.com/alecthomas/template
+github.com/alecthomas/template/parse
+# github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf
+github.com/alecthomas/units
+# go.i3wm.org/i3 v0.0.0-20181105220049-e2468ef5e1cd
+go.i3wm.org/i3
+# gopkg.in/alecthomas/kingpin.v2 v2.2.6
+gopkg.in/alecthomas/kingpin.v2
