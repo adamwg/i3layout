@@ -69,7 +69,7 @@ func handleWindowEvent(ev *i3.WindowEvent) error {
 	var err error
 
 	switch ev.Change {
-	case "new", "move", "floating":
+	case "new", "move":
 		log.Printf("handling %q event for window %q", ev.Change, ev.Container.Name)
 		ws, err = i3layout.GetWorkspaceForWindow(&ev.Container)
 		if err != nil {
