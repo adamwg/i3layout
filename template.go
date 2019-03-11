@@ -7,8 +7,13 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"go.i3wm.org/i3"
+)
+
+const (
+	killWorkspacePrefix = "i3layout-kill-"
 )
 
 type Node struct {
@@ -44,6 +49,9 @@ func (t *Template) Apply(ws *i3.Node, windows Windows) error {
 		return err
 	}
 
+	wsSuffix := time.Now().UnixNano()
+	killWorkspaceName := fmt.Sprintf("%s-%d", killWorkspacePrefix, wsSuffix)
+
 	var cmds []string
 	for _, n := range windows {
 		cmds = append(cmds,
@@ -51,7 +59,7 @@ func (t *Template) Apply(ws *i3.Node, windows Windows) error {
 		)
 	}
 	cmds = append(cmds, fmt.Sprintf(`rename workspace %s to %s`, ws.Name, killWorkspaceName))
-	cmds = append(cmds, fmt.Sprintf(`rename workspace %s to %s`, tempWorkspaceName, ws.Name))
+	cmds = append(cmds, fmt.Sprintf(`rename workspace %s to %s`, t.Name, ws.Name))
 	if ws.Focused {
 		cmds = append(cmds, fmt.Sprintf(`workspace %s`, ws.Name))
 	}

@@ -6,9 +6,9 @@ const (
 	tallWidth = float64(0.3)
 )
 
-func tallLayout(windows []*i3.Node) *Template {
+func tallLayout(wsName string, windows []*i3.Node) *Template {
 	layout := &Template{
-		Name:   tempWorkspaceName,
+		Name:   wsName,
 		Type:   i3.WorkspaceNode,
 		Layout: i3.SplitH,
 		Nodes: []*Node{
