@@ -1,12 +1,18 @@
 package server
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"sync/atomic"
 
 	"github.com/adamwg/i3layout"
 	"go.i3wm.org/i3"
+)
+
+var (
+	workspaceLayouts = map[string]string{}
 )
 
 func Serve() (err error) {
@@ -19,6 +25,7 @@ func Serve() (err error) {
 
 	er := i3.Subscribe(
 		i3.WindowEventType,
+		i3.TickEventType,
 	)
 	defer func() {
 		if err2 := er.Close(); err2 != nil {
@@ -31,13 +38,23 @@ func Serve() (err error) {
 		}
 		processing.Store(true)
 
-		// This is done in a goroutine so that we can skip over the events it
-		// causes.
-		go func() {
-			ev := er.Event().(*i3.WindowEvent)
-			err = handleWindowEvent(ev)
-			processing.Store(false)
-		}()
+		event := er.Event()
+		switch ev := event.(type) {
+		case *i3.WindowEvent:
+			// This is done in a goroutine so that we can skip over the events
+			// it causes.
+			go func() {
+				err = handleWindowEvent(ev)
+				processing.Store(false)
+			}()
+		case *i3.TickEvent:
+			// This is done in a goroutine so that we can skip over the events
+			// it causes.
+			go func() {
+				err = handleTickEvent(ev)
+				processing.Store(false)
+			}()
+		}
 	}
 
 	return err
@@ -74,8 +91,12 @@ func handleWindowEvent(ev *i3.WindowEvent) error {
 		return nil
 	}
 
+	if workspaceLayouts[ws.Name] == "" {
+		workspaceLayouts[ws.Name] = i3layout.LayoutNames()[0]
+	}
+
 	windows := i3layout.GetWindows(ws)
-	template := i3layout.MakeTemplate(windows)
+	template := i3layout.MakeTemplate(workspaceLayouts[ws.Name], windows)
 
 	if err := template.Apply(ws, windows); err != nil {
 		return err
@@ -86,4 +107,67 @@ func handleWindowEvent(ev *i3.WindowEvent) error {
 	}
 
 	return nil
+}
+
+type ChangeLayoutMessage struct {
+	Tag           string `json:"tag"`
+	WorkspaceName string `json:"workspace_name"`
+	LayoutName    string `json:"layout_name"`
+}
+
+const ChangeLayoutTag = "i3layout-change-layout"
+
+func handleTickEvent(ev *i3.TickEvent) error {
+	var payload ChangeLayoutMessage
+	err := json.Unmarshal([]byte(ev.Payload), &payload)
+	if err != nil || payload.Tag != ChangeLayoutTag {
+		// The tick payload wasn't from i3layout, so ignore it.
+		return nil
+	}
+
+	ws, err := i3layout.GetWorkspace(payload.WorkspaceName)
+	if err != nil {
+		return err
+	}
+
+	layoutName := payload.LayoutName
+	if payload.LayoutName == "next" {
+		layoutName = findOffsetLayout(payload.WorkspaceName, 1)
+	} else if payload.LayoutName == "prev" {
+		layoutName = findOffsetLayout(payload.WorkspaceName, -1)
+	} else if !i3layout.LayoutExists(payload.LayoutName) {
+		return errors.New("invalid layout name")
+	}
+
+	log.Printf("changing layout for workspace %q to %q", ws.Name, layoutName)
+
+	workspaceLayouts[ws.Name] = layoutName
+	windows := i3layout.GetWindows(ws)
+	template := i3layout.MakeTemplate(layoutName, windows)
+
+	if i3layout.IsFocusedWorkspace(ws) {
+		ws.Focused = true
+	}
+
+	if err := template.Apply(ws, windows); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func findOffsetLayout(wsName string, offset int) string {
+	layoutNames := i3layout.LayoutNames()
+	currentLayout, ok := workspaceLayouts[wsName]
+	if !ok {
+		return layoutNames[0]
+	}
+
+	for i, n := range layoutNames {
+		if n == currentLayout {
+			return layoutNames[(i+offset)%len(layoutNames)]
+		}
+	}
+
+	return layoutNames[0]
 }
