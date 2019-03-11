@@ -163,6 +163,10 @@ func findOffsetLayout(wsName string, offset int) string {
 		return layoutNames[0]
 	}
 
+	// Make offset positive for use in arithmetic below.
+	for offset < 0 {
+		offset += len(layoutNames)
+	}
 	for i, n := range layoutNames {
 		if n == currentLayout {
 			return layoutNames[(i+offset)%len(layoutNames)]
