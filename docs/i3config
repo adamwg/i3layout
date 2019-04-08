@@ -1,0 +1,24 @@
+# modifier aliases
+set $M Mod1
+set $M4 Mod4
+set $C Control
+set $S Shift
+
+# change focus
+set $i3window exec --no-startup-id i3window
+bindsym $M4+j $i3window focus next
+bindsym $M+Tab $i3window focus next
+bindsym $M4+k $i3window focus prev
+bindsym $M+$S+Tab $i3window focus prev
+bindsym $M+grave focus output left
+bindsym $M+$S+grave focus output right
+
+# move focused window
+bindsym $M4+$S+j $i3window swap next
+bindsym $M4+$S+k $i3window swap prev
+
+# layout
+set $i3layout exec i3layout client
+bindsym $M4+space $i3layout change-layout next
+
+exec --no-startup-id i3layout serve
