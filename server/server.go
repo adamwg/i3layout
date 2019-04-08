@@ -75,6 +75,10 @@ func handleWindowEvent(ev *i3.WindowEvent) error {
 		if err != nil {
 			return err
 		}
+		if ws == nil {
+			// Floating window or something else weird.
+			return nil
+		}
 
 		if i3layout.IsFocusedWorkspace(ws) {
 			ws.Focused = true

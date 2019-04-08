@@ -35,6 +35,11 @@ func (t *Template) Apply(ws *i3.Node, windows Windows) error {
 	if t == nil {
 		return nil
 	}
+	// Never apply layouts to i3-internal workspaces, whose names are prefixed
+	// with __.
+	if strings.HasPrefix(ws.Name, "__") {
+		return nil
+	}
 
 	tmpLayout, err := ioutil.TempFile("", "i3-layout-*.json")
 	tmpLayoutPath := tmpLayout.Name()
